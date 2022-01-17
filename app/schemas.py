@@ -12,6 +12,8 @@ class UserLogin(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    manager: bool
+
 
 class UserOut(BaseModel):
     id: int

@@ -12,8 +12,8 @@ rounter = APIRouter(
 #deixei so url como variavel em função pq ela muda sempre
 host = 'https://abn.redeip.com.br/'
 token = settings.ixc_token.encode('utf-8')
-print(settings.ixc_token)
-def get_cliente(ordem):
+
+def get_cliente(ordem): 
    
     url = "https://abn.redeip.com.br/webservice/v1/cliente".format(host)
 
