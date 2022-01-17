@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
-from .. import models,schemas,utils
+from .. import models,schemas,utils, oauth2
 from sqlalchemy.orm import Session, query
 from ..database import get_db
 
@@ -11,7 +11,10 @@ router = APIRouter(
 )
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    if current_user.manager == False:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a criar novos usuarios')
+    
     hashed_password=utils.hash(user.password)
     user.password = hashed_password
     new_user = models.Employee(**user.dict())

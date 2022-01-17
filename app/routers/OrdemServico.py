@@ -4,7 +4,11 @@ import json
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from starlette.routing import Router
 from ..config import settings
-
+from ..database import get_db
+from typing import List, Optional
+from sqlalchemy import func
+from .. import models,schemas, oauth2
+from sqlalchemy.orm import Session, query
 rounter = APIRouter(
     prefix="/OS",
     tags=['OS']
@@ -91,8 +95,16 @@ def get_ordem_abertas():
 
 
 
+
+
+
+
+
 @rounter.get("/Abertas")
-def get_os():
+def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    if current_user.manager == False:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a ver todas as Ordens de Servicos abertas')
+    
     ordemCompleta = []
     ordems_abertas = get_ordem_abertas()
     for ordem in ordems_abertas:
@@ -108,4 +120,26 @@ def get_os():
 
 
     return (ordemCompleta)
+
+
+@rounter.post("/Dist", status_code=status.HTTP_201_CREATED)
+def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    if current_user.manager == False:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a Distruibuir uma OS')
+    employee= db.query(models.Employee).filter(models.Employee.id == dist.id_employee).first()
+    if not employee:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Funcionario com id {dist.id_employee} não existe")
+    ordems_abertas = get_ordem_abertas()
+    print("dist.idOS: ", dist.id_ordem_servico)
+    for ordem in ordems_abertas:
+        print("ORDEM: ", ordem.get('id'))
+        if ordem.get('id') == dist.id_ordem_servico:
+            new_vote = models.OrdemDistribuida(employee_id = employee.id,  id_ordem_servico = ordem.get('id'),id_poster = current_user.id) 
+            db.add(new_vote)
+            db.commit()
+            return{"message": "Ordem Distribuida com sucesso"}   
+            break
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ordem de Servico nao encontrada na lista de Abertas")
+            
+###FALTA SO CONFIRMAR OS TIPOS DE DIST.ID_OS E ORGEM.GET('ID')
 

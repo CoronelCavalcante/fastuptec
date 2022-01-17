@@ -1,6 +1,8 @@
-from pydantic import BaseModel
+from subprocess import CompletedProcess
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional
+
 
 
 
@@ -12,7 +14,7 @@ class UserLogin(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
-    manager: bool
+    manager: bool = False
 
 
 class UserOut(BaseModel):
@@ -26,3 +28,11 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     acess_token: str
     token_type: str
+
+class TokenData(BaseModel):
+    id: Optional[str] = None
+
+
+class DistCreate(BaseModel):
+    id_employee: int
+    id_ordem_servico: int
