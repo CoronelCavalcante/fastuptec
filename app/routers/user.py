@@ -45,7 +45,7 @@ def get_user(id: int, db: Session = Depends(get_db) ):
 def create_first_user(db: Session = Depends(get_db)):
     hashed_password=utils.hash("adm123")
     
-    new_user = models.Employee( email=  "adm@gmail.com", password = hashed_password, manager = True)
+    new_user = models.Employee(email="adm@gmail.com", password = hashed_password, manager = True)
     db.add(new_user)
     try:
         db.commit()
