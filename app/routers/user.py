@@ -2,6 +2,7 @@ from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from .. import models,schemas,utils, oauth2
 from sqlalchemy.orm import Session, query
 from ..database import get_db
+from sqlalchemy.exc import IntegrityError
 
 
 
@@ -19,9 +20,14 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
     user.password = hashed_password
     new_user = models.Employee(**user.dict())
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+    try:
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    except IntegrityError:
+                db.rollback()
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Email ja registrado")
+
 
 
 @router.get('/{id}', response_model=schemas.UserOut)

@@ -1,4 +1,5 @@
 from subprocess import CompletedProcess
+from xmlrpc.client import Boolean
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
@@ -36,3 +37,5 @@ class TokenData(BaseModel):
 class DistCreate(BaseModel):
     id_employee: int
     id_ordem_servico: int
+    completed: Boolean = False
+    

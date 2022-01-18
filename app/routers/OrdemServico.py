@@ -9,6 +9,9 @@ from typing import List, Optional
 from sqlalchemy import func
 from .. import models,schemas, oauth2
 from sqlalchemy.orm import Session, query
+from sqlalchemy.exc import IntegrityError
+
+
 rounter = APIRouter(
     prefix="/OS",
     tags=['OS']
@@ -133,13 +136,29 @@ def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_use
     print("dist.idOS: ", dist.id_ordem_servico)
     for ordem in ordems_abertas:
         print("ORDEM: ", ordem.get('id'))
-        if ordem.get('id') == dist.id_ordem_servico:
-            new_vote = models.OrdemDistribuida(employee_id = employee.id,  id_ordem_servico = ordem.get('id'),id_poster = current_user.id) 
-            db.add(new_vote)
-            db.commit()
-            return{"message": "Ordem Distribuida com sucesso"}   
-            break
+        if ordem.get('id') == str(dist.id_ordem_servico):
+            nova_ordem = models.OrdemDistribuida(id_employee = employee.id,  id_ordem_servico = int(ordem.get('id')), id_poster = current_user.id, completed = dist.completed) 
+            db.add(nova_ordem)
+            try:                
+                db.commit()
+                return{"message": "Ordem Distribuida com sucesso"}
+            except IntegrityError:
+                db.rollback()
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"A Ordem de Servico: {ordem.get('id')} Ja foi dada ao Funcionario: {employee.email}")   
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ordem de Servico nao encontrada na lista de Abertas")
             
-###FALTA SO CONFIRMAR OS TIPOS DE DIST.ID_OS E ORGEM.GET('ID')
+
+
+@rounter.get("/Dist")
+def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    if current_user.manager == False:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Voce nao e autorizado a ver todas as Ordens de Servicos abertas')
+    distribuidas = db.query(models.OrdemDistribuida).all()
+    if not distribuidas:        
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas no banco de dados')
+     
+
+
+
+    return (distribuidas)
 
