@@ -2,3 +2,5 @@ venv/
 .env
 gunicorn.service
 __pycache__
+tests/
+.pytest_cache/
