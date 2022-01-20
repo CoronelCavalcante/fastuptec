@@ -21,13 +21,14 @@ class UserCreate(BaseModel):
 class UserOut(BaseModel):
     id: int
     email: EmailStr
+    manager: bool = False
     created_at: datetime
     class Config:
         orm_mode=True
 
 
 class Token(BaseModel):
-    acess_token: str
+    access_token: str
     token_type: str
 
 class TokenData(BaseModel):

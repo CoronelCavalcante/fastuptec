@@ -110,6 +110,8 @@ def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get
     
     ordemCompleta = []
     ordems_abertas = get_ordem_abertas()
+    if not ordems_abertas:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Nao existem ordems abertas')
     for ordem in ordems_abertas:
         cliente = get_cliente(ordem)
         login = get_login(ordem)

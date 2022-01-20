@@ -19,7 +19,7 @@ ALGORITHM =  settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 
-def create_acess_token(data: dict):
+def create_access_token(data: dict):
     to_encode = data.copy()
 
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -48,5 +48,4 @@ def get_current_user(token: str = Depends(OAuth2_scheme), db: Session = Depends(
     credentials_exeption = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     token = verify_acess_token(token, credentials_exeption)    
     user = db.query(models.Employee).filter(models.Employee.id == token.id).first()
-    
     return user
