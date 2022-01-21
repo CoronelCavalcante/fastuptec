@@ -2,7 +2,7 @@ name: Build and Deploy Code
 
 on: [push, pull_request]
 
-Jobs:
+jobs:
   job1:
     runs-on: ubuntu-latest
     steps:
