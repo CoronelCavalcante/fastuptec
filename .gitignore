@@ -4,3 +4,4 @@ gunicorn.service
 __pycache__
 tests/
 .pytest_cache/
+docker-compose.yml
