@@ -22,7 +22,7 @@ app.add_middleware(
 
 
 
-app.include_router(ordemServico.rounter)
+app.include_router(ordemServico.router)
 app.include_router(user.router)
 app.include_router(auth.router)
 
@@ -30,4 +30,4 @@ app.include_router(auth.router)
 
 @app.get("/")
 def root():
-    return {"message": f"Hello World!testando o bind"}
+    return {"message": f"Hello World!!!"}

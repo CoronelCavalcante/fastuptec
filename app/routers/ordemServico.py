@@ -12,21 +12,22 @@ from sqlalchemy.orm import Session, query
 from sqlalchemy.exc import IntegrityError
 
 
-rounter = APIRouter(
+router = APIRouter(
     prefix="/OS",
     tags=['OS']
 )
+#MELHOR TACAR TODAS AS FUNÇOES DA AIC EM OUTRO ARQUIVO
 #deixei so url como variavel em função pq ela muda sempre
 host = 'https://abn.redeip.com.br/'
 token = settings.ixc_token.encode('utf-8')
 
-def get_cliente(ordem): 
+def get_cliente(id_cliente): 
    
     url = "https://abn.redeip.com.br/webservice/v1/cliente".format(host)
 
     payload = json.dumps({
         'qtype': 'cliente.id',
-        'query': ordem.get('id_cliente'),
+        'query': id_cliente,
         'oper': '=',
         'page': '1',
         'rp': '100',
@@ -44,11 +45,11 @@ def get_cliente(ordem):
     registros = resjson.get('registros')
     return registros[0]
 
-def get_login(ordem):
+def get_login(id_login):
     url = "https://abn.redeip.com.br/webservice/v1/radusuarios".format(host)
     payload = json.dumps({
     'qtype': 'radusuarios.id',
-    'query':  ordem.get('id_login'),
+    'query':  id_login,
     'oper': '=',
     'page': '1',
     'rp': '20',
@@ -97,13 +98,40 @@ def get_ordem_abertas():
     return registros
 
 
+def get_my_ordem_aberta(id):
+    url = "https://abn.redeip.com.br/webservice/v1/su_oss_chamado".format(host)
+
+    payload = json.dumps({
+        'qtype': 'su_oss_chamado.id',
+        'query': id,
+        'oper': '=',
+        'page': '1',
+        'rp': '100',
+        'sortname': 'su_oss_chamado.id',
+        'sortorder': 'asc'
+    })
+
+    headers = {
+        'ixcsoft': 'listar',
+        'Authorization': 'Basic {}'.format(base64.b64encode(token).decode('utf-8')),
+        'Content-Type': 'application/json'
+    }
+
+
+
+
+
+    response = requests.post(url, data=payload, headers=headers)
+    resjson = response.json()
+    registros = resjson.get('registros')
+    return registros
 
 
 
 
 
 
-@rounter.get("/Abertas")
+@router.get("/Abertas")
 def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a ver todas as Ordens de Servicos abertas')
@@ -113,8 +141,8 @@ def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get
     if not ordems_abertas:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Nao existem ordems abertas')
     for ordem in ordems_abertas:
-        cliente = get_cliente(ordem)
-        login = get_login(ordem)
+        cliente = get_cliente(ordem.get('id_cliente'))
+        login = get_login(ordem.get('id_login'))
         if login != None:
             login = login[0] 
              
@@ -127,7 +155,7 @@ def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get
     return (ordemCompleta)
 
 
-@rounter.post("/Dist", status_code=status.HTTP_201_CREATED)
+@router.post("/Dist", status_code=status.HTTP_201_CREATED)
 def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a Distruibuir uma OS')
@@ -151,7 +179,7 @@ def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_use
             
 
 
-@rounter.get("/Dist")
+@router.get("/Dist")
 def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Voce nao e autorizado a ver todas as Ordens de Servicos abertas')
@@ -164,3 +192,24 @@ def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depend
 
     return (distribuidas)
 
+
+
+@router.get("/My")
+def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    minhasOrdens = []
+    ordensDB= db.query(models.OrdemDistribuida).filter(models.OrdemDistribuida.id_employee == current_user.id).all()
+    if not ordensDB:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas no banco de dados')
+    for ordem in ordensDB:
+        minhaordem = get_my_ordem_aberta(str(ordem.id_ordem_servico))
+        cliente = get_cliente(minhaordem[0].get('id_cliente'))
+        login = get_login(minhaordem[0].get('id_login'))
+        if login != None:
+            login = login[0] 
+             
+        posterquery = db.query(models.Employee).filter(models.Employee.id == ordem.id_poster).first()
+        poster = posterquery.email
+        associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster }
+        minhasOrdens.append(associar)
+
+    return (minhasOrdens)
