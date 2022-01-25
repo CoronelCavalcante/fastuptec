@@ -30,6 +30,7 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    manager: Boolean
 
 class TokenData(BaseModel):
     id: Optional[str] = None
