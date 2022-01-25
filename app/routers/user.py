@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from .. import models,schemas,utils, oauth2
 from sqlalchemy.orm import Session, query
@@ -29,14 +30,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
 
 
 
-@router.get('/{id}', response_model=schemas.UserOut)
-def get_user(id: int, db: Session = Depends(get_db) ):
-    user = db.query(models.Employee).filter(models.Employee.id == id).first()
 
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user with id: {id} was not found")
-    
-    return user
 
 
 @router.post("/adm", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
@@ -61,7 +55,7 @@ def delete_user(id: int, db: Session = Depends(get_db), current_user: int = Depe
    # deleted_post = cursor.fetchone()
    # conn.commit()
     if current_user.manager == False:        
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a criar novos usuarios')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado deletar usuarios')
     
     emp_query = db.query(models.Employee).filter(models.Employee.id == id)
     empDel = emp_query.first()
@@ -72,3 +66,28 @@ def delete_user(id: int, db: Session = Depends(get_db), current_user: int = Depe
     emp_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+
+@router.get('/all', response_model=List[schemas.UserOut])
+def get_all_users(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    user = db.query(models.Employee).all()
+    if current_user.manager == False:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a criar novos usuarios')
+    
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"nao sei como isso é possivel mas a lista de usuarios ta vazia")
+    
+    return user
+
+
+
+@router.get('/{id}', response_model=schemas.UserOut)
+def get_user(id: int, db: Session = Depends(get_db) ):
+    user = db.query(models.Employee).filter(models.Employee.id == id).first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user with id: {id} was not found")
+    
+    return user

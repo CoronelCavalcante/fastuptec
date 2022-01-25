@@ -195,6 +195,7 @@ def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depend
 
 
 @router.get("/My")
+#tem algum errinho que ta acontencendo por aqui eu acho com o current user caso ele nao teja relogado
 def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     minhasOrdens = []
     ordensDB= db.query(models.OrdemDistribuida).filter(models.OrdemDistribuida.id_employee == current_user.id).all()
