@@ -97,8 +97,8 @@ def get_ordem_abertas():
     registros = resjson.get('registros')
     return registros
 
-
-def get_my_ordem_aberta(id):
+#mudei e my ordem aberta pra my ordem 1 pq nao tem como ter certeza se ta ou nao aberta
+def get_my_ordem_1(id):
     url = "https://abn.redeip.com.br/webservice/v1/su_oss_chamado".format(host)
 
     payload = json.dumps({
@@ -202,7 +202,7 @@ def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
     if not ordensDB:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas no banco de dados')
     for ordem in ordensDB:
-        minhaordem = get_my_ordem_aberta(str(ordem.id_ordem_servico))
+        minhaordem = get_my_ordem_1(str(ordem.id_ordem_servico))
         cliente = get_cliente(minhaordem[0].get('id_cliente'))
         login = get_login(minhaordem[0].get('id_login'))
         if login != None:
