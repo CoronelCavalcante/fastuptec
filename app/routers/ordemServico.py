@@ -210,7 +210,7 @@ def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
              
         posterquery = db.query(models.Employee).filter(models.Employee.id == ordem.id_poster).first()
         poster = posterquery.email
-        associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster }
+        associar = {'ordem_servico': minhaordem[0],'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster }
         minhasOrdens.append(associar)
 
     return (minhasOrdens)
