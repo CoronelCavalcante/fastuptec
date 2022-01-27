@@ -95,10 +95,13 @@ def get_ordem_abertas():
     response = requests.post(url, data=payload, headers=headers)
     resjson = response.json()
     registros = resjson.get('registros')
+    if not registros:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'ordens abertas nao foram encontradas')
+    
     return registros
 
 #mudei e my ordem aberta pra my ordem 1 pq nao tem como ter certeza se ta ou nao aberta
-def get_my_ordem_1(id):
+def get_one_by_id(id):
     url = "https://abn.redeip.com.br/webservice/v1/su_oss_chamado".format(host)
 
     payload = json.dumps({
@@ -124,7 +127,9 @@ def get_my_ordem_1(id):
     response = requests.post(url, data=payload, headers=headers)
     resjson = response.json()
     registros = resjson.get('registros')
-    return registros
+    if not registros:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'ordem {id} nao existe')
+    return registros[0]
 
 
 
@@ -202,15 +207,35 @@ def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
     if not ordensDB:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas no banco de dados')
     for ordem in ordensDB:
-        minhaordem = get_my_ordem_1(str(ordem.id_ordem_servico))
-        cliente = get_cliente(minhaordem[0].get('id_cliente'))
-        login = get_login(minhaordem[0].get('id_login'))
+        minhaordem = get_one_by_id(str(ordem.id_ordem_servico))
+        cliente = get_cliente(minhaordem.get('id_cliente'))
+        login = get_login(minhaordem.get('id_login'))
         if login != None:
             login = login[0] 
              
         posterquery = db.query(models.Employee).filter(models.Employee.id == ordem.id_poster).first()
         poster = posterquery.email
-        associar = {'ordem_servico': minhaordem[0],'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster }
+        associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster }
         minhasOrdens.append(associar)
 
     return (minhasOrdens)
+
+
+
+
+@router.get("/{id}")
+#tem algum errinho que ta acontencendo por aqui eu acho com o current user caso ele nao teja relogado
+def get_one(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    if current_user.manager == False:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Nao autorizado')
+    
+    minhaordem = get_one_by_id(str(id))
+    
+    cliente = get_cliente(minhaordem.get('id_cliente'))
+    login = get_login(minhaordem.get('id_login'))
+    if login != None:
+        login = login[0] 
+    minhaordem = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login}
+    
+
+    return (minhaordem)
