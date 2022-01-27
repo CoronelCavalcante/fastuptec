@@ -191,11 +191,22 @@ def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depend
     distribuidas = db.query(models.OrdemDistribuida).all()
     if not distribuidas:        
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas no banco de dados')
-     
+    ordemDistCompleta = []
+    for ordem in distribuidas:
+        minhaordem = get_one_by_id(str(ordem.id_ordem_servico))
+        cliente = get_cliente(minhaordem.get('id_cliente'))
+        login = get_login(minhaordem.get('id_login'))
+        if login != None:
+            login = login[0] 
+             
+        poster = db.query(models.Employee.id,models.Employee.email,models.Employee.created_at,models.Employee.manager).filter(models.Employee.id == ordem.id_poster).first()
+        employee = db.query(models.Employee.id,models.Employee.email,models.Employee.created_at,models.Employee.manager).filter(models.Employee.id == ordem.id_employee).first()
+        associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'distribuida': ordem, 'poster': poster, 'employee': employee }
+        ordemDistCompleta.append(associar)
 
 
 
-    return (distribuidas)
+    return (ordemDistCompleta)
 
 
 
