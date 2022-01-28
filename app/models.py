@@ -20,9 +20,9 @@ class Employee(Base):
 #talvez criar um endpoint que so faz isso de pegar um id ordem de servico e ir buscar o resto....
 class OrdemDistribuida(Base):
         __tablename__ = "ordemdistribuida"        
-        id_employee = Column(Integer, ForeignKey("employee.id", ondelete="RESTRICT"), primary_key=True)
+        id_employee = Column(Integer, ForeignKey("employee.id", ondelete="CASCADE"), primary_key=True)
         id_ordem_servico = Column(Integer, primary_key=True, nullable=False)
-        id_poster = Column(Integer,ForeignKey("employee.id", ondelete="RESTRICT") ,nullable=False)
+        id_poster = Column(Integer,ForeignKey("employee.id", ondelete="CASCADE") ,nullable=False)
         completed = Column(Boolean,default=False, nullable=False)
         created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
