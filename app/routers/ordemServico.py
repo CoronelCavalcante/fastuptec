@@ -238,9 +238,9 @@ def get_emp_os(id: int, db: Session = Depends(get_db), current_user: int = Depen
     if current_user.manager == False:        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Voce nao e autorizado a ver todas as Ordens de Servicos abertas')
     Ordens = []
-    ordensDB= db.query(models.OrdemDistribuida).filter(models.OrdemDistribuida.id_employee == current_user.id).all()
+    ordensDB= db.query(models.OrdemDistribuida).filter(models.OrdemDistribuida.id_employee == id).all()
     if not ordensDB:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas no banco de dados')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas para esse funcionario no banco de dados')
     for ordem in ordensDB:
         minhaordem = get_one_by_id(str(ordem.id_ordem_servico))
         cliente = get_cliente(minhaordem.get('id_cliente'))
