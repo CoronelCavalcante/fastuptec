@@ -33,19 +33,19 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
 
 
 
-@router.post("/adm", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-def create_first_user(db: Session = Depends(get_db)):
-    hashed_password=utils.hash("adm123")
+# @router.post("/adm", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
+# def create_first_user(db: Session = Depends(get_db)):
+#     hashed_password=utils.hash("adm123")
     
-    new_user = models.Employee(email="adm@gmail.com", password = hashed_password, manager = True)
-    db.add(new_user)
-    try:
-        db.commit()
-        db.refresh(new_user)
-        return new_user
-    except IntegrityError:
-                db.rollback()
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Email ja registrado")
+#     new_user = models.Employee(email="adm@gmail.com", password = hashed_password, manager = True)
+#     db.add(new_user)
+#     try:
+#         db.commit();
+#         db.refresh(new_user)
+#         return new_user
+#     except IntegrityError:
+#                 db.rollback()
+#                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Email ja registrado")
 
 
 
