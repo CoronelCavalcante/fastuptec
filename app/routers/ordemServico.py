@@ -159,7 +159,7 @@ def get_one_assunto(id):
     resjson = response.json()
     registros = resjson.get('registros')
    
-    return registros
+    return registros[0]
 
 
 
@@ -191,7 +191,7 @@ def get_one_contrato(id):
     resjson = response.json()
     registros = resjson.get('registros')
    
-    return registros
+    return registros[0]
 
 
 
