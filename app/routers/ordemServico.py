@@ -264,8 +264,8 @@ def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depend
         login = get_login(minhaordem.get('id_login'))
         if login != None:
             login = login[0] 
-        contrato = get_one_contrato(ordem.get('id_contrato'))
-        assunto = get_one_assunto(ordem.get('id_assunto'))     
+        contrato = get_one_contrato(minhaordem.get('id_contrato'))
+        assunto = get_one_assunto(minhaordem.get('id_assunto'))     
         poster = db.query(models.Employee.id,models.Employee.email,models.Employee.created_at,models.Employee.manager).filter(models.Employee.id == ordem.id_poster).first()
         employee = db.query(models.Employee.id,models.Employee.email,models.Employee.created_at,models.Employee.manager).filter(models.Employee.id == ordem.id_employee).first()
         associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'distribuida': ordem, 'poster': poster, 'employee': employee, 'contrato': contrato, 'assunto': assunto }
@@ -291,8 +291,8 @@ def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
         login = get_login(minhaordem.get('id_login'))
         if login != None:
             login = login[0] 
-        contrato = get_one_contrato(ordem.get('id_contrato'))
-        assunto = get_one_assunto(ordem.get('id_assunto'))     
+        contrato = get_one_contrato(minhaordem.get('id_contrato'))
+        assunto = get_one_assunto(minhaordem.get('id_assunto'))     
         posterquery = db.query(models.Employee).filter(models.Employee.id == ordem.id_poster).first()
         poster = posterquery.email
         associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster, 'contrato': contrato, 'assunto': assunto  }
