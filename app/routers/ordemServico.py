@@ -315,8 +315,8 @@ def get_emp_os(id: int, db: Session = Depends(get_db), current_user: int = Depen
         login = get_login(minhaordem.get('id_login'))
         if login != None:
             login = login[0] 
-        contrato = get_one_contrato(ordem.get('id_contrato'))
-        assunto = get_one_assunto(ordem.get('id_assunto'))         
+        contrato = get_one_contrato(minhaordem.get('id_contrato'))
+        assunto = get_one_assunto(minhaordem.get('id_assunto'))         
         posterquery = db.query(models.Employee).filter(models.Employee.id == ordem.id_poster).first()
         poster = posterquery.email
         associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster, 'contrato': contrato, 'assunto': assunto  }
