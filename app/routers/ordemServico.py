@@ -131,6 +131,69 @@ def get_one_by_id(id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'ordem {id} nao existe')
     return registros[0]
 
+def get_one_assunto(id):
+    url = "https://abn.redeip.com.br/webservice/v1/su_oss_assunto".format(host)
+
+    payload = json.dumps({
+        'qtype': 'su_oss_assunto.id',
+        'query': id,
+        'oper': '=',
+        'page': '1',
+        'rp': '100',
+        'sortname': 'su_oss_assunto.id',
+        'sortorder': 'asc'
+    })
+
+    headers = {
+        'ixcsoft': 'listar',
+        'Authorization': 'Basic {}'.format(base64.b64encode(token).decode('utf-8')),
+        'Content-Type': 'application/json'
+    }
+
+
+
+
+
+    
+    response = requests.post(url, data=payload, headers=headers)
+    resjson = response.json()
+    registros = resjson.get('registros')
+   
+    return registros
+
+
+
+def get_one_contrato(id):
+    url = "https://abn.redeip.com.br/webservice/v1/cliente_contrato".format(host)
+
+    payload = json.dumps({
+        'qtype': 'cliente_contrato.id',
+        'query': id,
+        'oper': '=',
+        'page': '1',
+        'rp': '100',
+        'sortname': 'cliente_contrato.id',
+        'sortorder': 'asc'
+    })
+
+    headers = {
+        'ixcsoft': 'listar',
+        'Authorization': 'Basic {}'.format(base64.b64encode(token).decode('utf-8')),
+        'Content-Type': 'application/json'
+    }
+
+
+
+
+
+    
+    response = requests.post(url, data=payload, headers=headers)
+    resjson = response.json()
+    registros = resjson.get('registros')
+   
+    return registros
+
+
 
 
 
@@ -149,10 +212,13 @@ def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get
         cliente = get_cliente(ordem.get('id_cliente'))
         login = get_login(ordem.get('id_login'))
         if login != None:
-            login = login[0] 
+            login = login[0]
+        contrato = get_one_contrato(ordem.get('id_contrato'))
+        assunto = get_one_assunto(ordem.get('id_assunto'))
+     
              
 
-        associar = {'ordem_servico': ordem,'cliente': cliente, 'login': login}
+        associar = {'ordem_servico': ordem,'cliente': cliente, 'login': login, 'assunto': assunto, 'contrato': contrato}
         ordemCompleta.append(associar)    
 
 
