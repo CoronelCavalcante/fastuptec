@@ -8,14 +8,13 @@ from sqlalchemy.orm import Session, query
 from sqlalchemy.exc import IntegrityError
 from fastapi_utils.session import FastAPISessionMaker
 from .config import settings
-from typing import List
-from .routers.ordemServico import get_ordem_abertas
+from .routers.ordemServico import get_ordem_abertas, get_cliente, get_one_contrato, get_login, get_one_assunto
 
 
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://{0}:{1}@{2}/{3}".format(settings.database_username, settings.database_password, settings.database_hostname,settings.database_name)
 
 sessionmaker = FastAPISessionMaker(SQLALCHEMY_DATABASE_URL)
-
+ordemMemoria = []
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -48,11 +47,24 @@ def root():
 @app.on_event("startup")
 @repeat_every(seconds=60 * 10)
 def update_ordem_dist():
+    ordemMemoria.clear
+    abertas = get_ordem_abertas()
+    for ordem in abertas:
+        cliente = get_cliente(ordem.get('id_cliente'))
+        login = get_login(ordem.get('id_login'))
+        if login != None:
+            login = login[0]
+        contrato = get_one_contrato(ordem.get('id_contrato'))
+        assunto = get_one_assunto(ordem.get('id_assunto'))
+        associar = {'ordem_servico': ordem,'cliente': cliente, 'login': login, 'assunto': assunto, 'contrato': contrato}
+        ordemMemoria.append(associar)
+    print("ordem memoria carregada")
+    
     with sessionmaker.context_session() as db:
         distribuidas = db.query(models.OrdemDistribuida).all()
+        
         if distribuidas:   
                      
-            abertas = get_ordem_abertas()
             A_abertas = []
             for o in abertas:
                 aberta = int(o.get("id"))

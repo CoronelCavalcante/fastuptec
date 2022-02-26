@@ -7,16 +7,17 @@ from ..config import settings
 from ..database import get_db
 from typing import List, Optional
 from sqlalchemy import func
-from .. import models,schemas, oauth2
+from .. import models,schemas, oauth2, main
 from sqlalchemy.orm import Session, query
 from sqlalchemy.exc import IntegrityError
+
 
 
 router = APIRouter(
     prefix="/OS",
     tags=['OS']
 )
-#MELHOR TACAR TODAS AS FUNÇOES DA AIC EM OUTRO ARQUIVO
+#MELHOR COLOCAR TODAS AS FUNÇOES DA AIC EM OUTRO ARQUIVO
 #deixei so url como variavel em função pq ela muda sempre
 host = 'https://abn.redeip.com.br/'
 token = settings.ixc_token.encode('utf-8')
@@ -204,26 +205,8 @@ def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get
     if current_user.manager == False:        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é autorizado a ver todas as Ordens de Servicos abertas')
     
-    ordemCompleta = []
-    ordems_abertas = get_ordem_abertas()
-    if not ordems_abertas:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Nao existem ordems abertas')
-    for ordem in ordems_abertas:
-        cliente = get_cliente(ordem.get('id_cliente'))
-        login = get_login(ordem.get('id_login'))
-        if login != None:
-            login = login[0]
-        contrato = get_one_contrato(ordem.get('id_contrato'))
-        assunto = get_one_assunto(ordem.get('id_assunto'))
-     
-             
 
-        associar = {'ordem_servico': ordem,'cliente': cliente, 'login': login, 'assunto': assunto, 'contrato': contrato}
-        ordemCompleta.append(associar)    
-
-
-
-    return (ordemCompleta)
+    return (main.ordemMemoria)
 
 
 @router.post("/Dist", status_code=status.HTTP_201_CREATED)
@@ -233,8 +216,9 @@ def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_use
     employee= db.query(models.Employee).filter(models.Employee.id == dist.id_employee).first()
     if not employee:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Funcionario com id {dist.id_employee} não existe")
-    ordems_abertas = get_ordem_abertas()
+    ordems_abertas = main.ordemMemoria
     print("dist.idOS: ", dist.id_ordem_servico)
+    print(ordems_abertas[1].ordem_servico)
     for ordem in ordems_abertas:
         print("ORDEM: ", ordem.get('id'))
         if ordem.get('id') == str(dist.id_ordem_servico):
@@ -249,7 +233,7 @@ def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_use
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ordem de Servico nao encontrada na lista de Abertas")
             
 
-
+#isso aqui vai ficar cada vez pior pra cada distribuição de ordem ja que to pegando as passadas tambem.
 @router.get("/Dist")
 def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
@@ -325,6 +309,10 @@ def get_emp_os(id: int, db: Session = Depends(get_db), current_user: int = Depen
     return (Ordens)
 
 
+# @router.get("/rapida")
+# def get_open_fast():
+#     print("PING")
+#     return(main.ordemMemoria)
 
 
 
