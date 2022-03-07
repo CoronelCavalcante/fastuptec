@@ -44,7 +44,7 @@ def get_cliente(id_cliente):
     response = requests.post(url, data=payload, headers=headers)
     resjson = response.json()
     registros = resjson.get('registros')
-    return registros[0]
+    return registros
 
 def get_login(id_login):
     url = "https://abn.redeip.com.br/webservice/v1/radusuarios".format(host)
