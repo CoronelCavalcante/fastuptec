@@ -47,24 +47,17 @@ def root():
 @app.on_event("startup")
 @repeat_every(seconds=60 * 10)
 def update_ordem_dist():
-    print("limpando ordemmemoria")
+   
     ordemMemoria.clear
-    print("indo para o get ordem abertas")
     abertas = get_ordem_abertas()
-    print("indo para o for tamano total das abertas ",len(abertas))
     for ordem in abertas:
-        print("id da ordem a ser tratada ", ordem.get('id'), " id do cliente.", ordem.get('id_cliente'), "id contrato: ", ordem.get('id_contrato'), " ordem.get('id_assunto'): ", ordem.get('id_assunto') )
-        print("indo para o get cliente")
         cliente = get_cliente(ordem.get('id_cliente'))
         if cliente != None:
             cliente = cliente[0]
-        print("indo para o get login")
         login = get_login(ordem.get('id_login'))
         if login != None:
             login = login[0]
-        print("indo para o get contrato")
         contrato = get_one_contrato(ordem.get('id_contrato'))
-        print("indo para o get assunto")
         assunto = get_one_assunto(ordem.get('id_assunto'))
         associar = {'ordem_servico': ordem,'cliente': cliente, 'login': login, 'assunto': assunto, 'contrato': contrato}
         ordemMemoria.append(associar)
