@@ -48,7 +48,7 @@ def root():
 @repeat_every(seconds=60 * 10)
 def update_ordem_dist():
    
-    ordemMemoria.clear
+    ordemMemoria.clear()
     abertas = get_ordem_abertas()
     for ordem in abertas:
         cliente = get_cliente(ordem.get('id_cliente'))
