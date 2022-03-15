@@ -197,7 +197,45 @@ def get_one_contrato(id):
 
 
 
-
+@router.get("/Manager")
+def all_manager(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    if current_user.manager == False:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Você não é manager')
+    distribuidas = db.query(models.OrdemDistribuida).all()
+    if not distribuidas:        
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não ha ordens distribuidas no banco de dados')
+    ordemDistCompleta = []
+    for ordem in distribuidas:
+        minhaordem = get_one_by_id(str(ordem.id_ordem_servico))
+        cliente = get_cliente(minhaordem.get('id_cliente'))
+        if cliente !=None:
+            cliente = cliente[0]
+        login = get_login(minhaordem.get('id_login'))
+        if login != None:
+            login = login[0] 
+        contrato = get_one_contrato(minhaordem.get('id_contrato'))
+        assunto = get_one_assunto(minhaordem.get('id_assunto'))     
+        poster = db.query(models.Employee.id,models.Employee.email,models.Employee.created_at,models.Employee.manager).filter(models.Employee.id == ordem.id_poster).first()
+        employee = db.query(models.Employee.id,models.Employee.email,models.Employee.created_at,models.Employee.manager).filter(models.Employee.id == ordem.id_employee).first()
+        associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'distribuida': ordem, 'poster': poster, 'employee': employee, 'contrato': contrato, 'assunto': assunto }
+        ordemDistCompleta.append(associar)
+    minhasOrdens = []
+    ordensDB= db.query(models.OrdemDistribuida).filter(models.OrdemDistribuida.id_employee == current_user.id).all()
+    if ordensDB:
+        for ordem in ordensDB:
+            minhaordem = get_one_by_id(str(ordem.id_ordem_servico))
+            cliente = get_cliente(minhaordem.get('id_cliente'))
+            login = get_login(minhaordem.get('id_login'))
+            if login != None:
+                login = login[0] 
+            contrato = get_one_contrato(minhaordem.get('id_contrato'))
+            assunto = get_one_assunto(minhaordem.get('id_assunto'))     
+            posterquery = db.query(models.Employee).filter(models.Employee.id == ordem.id_poster).first()
+            poster = posterquery.email
+            associar = {'ordem_servico': minhaordem,'cliente': cliente, 'login': login, 'completed': ordem.completed, 'created_at': ordem.created_at, 'givem_by': poster, 'contrato': contrato, 'assunto': assunto  }
+            minhasOrdens.append(associar)
+    managercompleto = {'ordens_abertas': main.ordemMemoria, 'minhas_ordens': minhasOrdens,'ordens_dist':ordemDistCompleta}
+    return (managercompleto)
 
 
 @router.get("/Abertas")
