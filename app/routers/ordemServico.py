@@ -337,6 +337,8 @@ def get_emp_os(id: int, db: Session = Depends(get_db), current_user: int = Depen
     for ordem in ordensDB:
         minhaordem = get_one_by_id(str(ordem.id_ordem_servico))
         cliente = get_cliente(minhaordem.get('id_cliente'))
+        if cliente != None:
+            cliente = cliente[0]
         login = get_login(minhaordem.get('id_login'))
         if login != None:
             login = login[0] 
