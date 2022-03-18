@@ -255,19 +255,20 @@ def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_use
     if not employee:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Funcionario com id {dist.id_employee} não existe")
     ordems_abertas = main.ordemMemoria
-    print("dist.idOS: ", dist.id_ordem_servico)
-    print(ordems_abertas[1].ordem_servico)
+    print(ordems_abertas[0].get("ordem_servico").get('id'))
+    # print("dist: ", dist)
+    # print(ordems_abertas[0])
     for ordem in ordems_abertas:
-        print("ORDEM: ", ordem.get('id'))
-        if ordem.get('id') == str(dist.id_ordem_servico):
-            nova_ordem = models.OrdemDistribuida(id_employee = employee.id,  id_ordem_servico = int(ordem.get('id')), id_poster = current_user.id, completed = dist.completed) 
+        # print("ORDEM: ", ordem.mensagem_resposta.get('id'))
+        if str(ordem.get("ordem_servico").get('id')) == str(dist.id_ordem_servico):
+            nova_ordem = models.OrdemDistribuida(id_employee = employee.id,  id_ordem_servico = int(ordem.get("ordem_servico").get('id')), id_poster = current_user.id, completed = dist.completed) 
             db.add(nova_ordem)
             try:                
                 db.commit()
                 return{"message": "Ordem Distribuida com sucesso"}
             except IntegrityError:
                 db.rollback()
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"A Ordem de Servico: {ordem.get('id')} Ja foi dada ao Funcionario: {employee.email}")   
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"A Ordem de Servico: {ordem.get('ordem_servico').get('id')} Ja foi dada ao Funcionario: {employee.email}")   
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ordem de Servico nao encontrada na lista de Abertas")
             
 
