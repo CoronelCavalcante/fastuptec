@@ -7,6 +7,8 @@ from . import schemas, database, models
 from sqlalchemy.orm import Session
 from .config import settings
 
+#esse arquivo lida com a criação e validação do token de acesso apos alguem ta logado na API
+
 OAuth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 
 #SECRET_KEY

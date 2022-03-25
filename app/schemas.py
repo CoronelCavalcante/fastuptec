@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 
-
+#esse arquivo lida com as formatação da reposta do sistema para as chamadas que ele recebe, varias chamadas nao usam isso
 
 
 class UserLogin(BaseModel):

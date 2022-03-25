@@ -10,7 +10,7 @@ from fastapi_utils.session import FastAPISessionMaker
 from .config import settings
 from .routers.ordemServico import get_ordem_abertas, get_cliente, get_one_contrato, get_login, get_one_assunto
 
-
+#arquivo usado para incializar o banco de dados caso nao exista e estabelecer conecção com o memsmo
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://{0}:{1}@{2}/{3}".format(settings.database_username, settings.database_password, settings.database_hostname,settings.database_name)
 
 sessionmaker = FastAPISessionMaker(SQLALCHEMY_DATABASE_URL)
@@ -18,7 +18,7 @@ ordemMemoria = []
 
 models.Base.metadata.create_all(bind=engine)
 
-
+#criar a API e o middle ware para receber pedidos de qualquer IP
 app = FastAPI()
 
 origins = ["*"]
@@ -38,12 +38,13 @@ app.include_router(user.router)
 app.include_router(auth.router)
 
 
-
+#rota para teste ping
 @app.get("/")
 def root():
     return {"message": f"Hello World!!!"}
 
-#Esse codigo ta exelente nao sei como melhorar mais
+#rotina de manutemção usada para acessar o Banco da IXC e receber as informações de todas as OS abertas e seus detalhes
+#assim ao menos é mais rapido para uma das funções do APP
 @app.on_event("startup")
 @repeat_every(seconds=60 * 10)
 def update_ordem_dist():
@@ -61,7 +62,6 @@ def update_ordem_dist():
         assunto = get_one_assunto(ordem.get('id_assunto'))
         associar = {'ordem_servico': ordem,'cliente': cliente, 'login': login, 'assunto': assunto, 'contrato': contrato}
         ordemMemoria.append(associar)
-    print("ordem memoria carregada")
     
     with sessionmaker.context_session() as db:
         distribuidas = db.query(models.OrdemDistribuida).all()

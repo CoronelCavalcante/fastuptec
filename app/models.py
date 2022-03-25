@@ -4,7 +4,10 @@ from sqlalchemy.sql.expression import null, text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from .database import Base
 
-#por boas praticas é melhor ter tabelas diferentes para tipos diferentes de funcionarios???? por enquanto sou vou de employee e manager
+
+#esse arquivo lida com as tabelas no Banco de Dados
+
+#tabela de funcionarios, password ja é encriptado ao ser armazenado
 class Employee(Base):
     __tablename__ = "employee"
 
@@ -16,8 +19,7 @@ class Employee(Base):
 
 
 
-#quaro ver se eu guardo id cliente e id login pq se nao vao ser 3 consultas no front end quero ve se reduso a sempre 1
-#talvez criar um endpoint que so faz isso de pegar um id ordem de servico e ir buscar o resto....
+#tabela de ordem distribuida associado o id e um funcionario com o id de uma ordem que ele deva tratar
 class OrdemDistribuida(Base):
         __tablename__ = "ordemdistribuida"        
         id_employee = Column(Integer, ForeignKey("employee.id", ondelete="CASCADE"), primary_key=True)

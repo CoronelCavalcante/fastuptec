@@ -1,5 +1,5 @@
 from pydantic import BaseSettings
-
+#arquivo usado para organizar as configuraçoes ambientais que serao usadas para acessar o banco de dados
 
 class Settings(BaseSettings):
     database_hostname: str

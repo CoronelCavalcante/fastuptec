@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import pymysql
 from .config import settings
 
-
+#arquivo usado para criar conecção com o banco de dados
 
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://{0}:{1}@{2}/{3}".format(settings.database_username, settings.database_password, settings.database_hostname,settings.database_name)
 

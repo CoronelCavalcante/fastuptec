@@ -8,6 +8,9 @@ from .. import database, schemas, models, oauth2
 
 router = APIRouter(tags=['Autentication'])
 
+#esse arquivo e rota é usado para lidar com o login de usuarios e criação do seu token de acesso temporario
+
+
 @router.post('/login', response_model=schemas.Token)
 def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
     user = db.query(models.Employee).filter(models.Employee.email == user_credentials.username).first()
@@ -18,9 +21,5 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
     if not utils.verify(user_credentials.password, user.password):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Invalid Credentials")
     
-
-    #create a token
-    #return token
-
     access_token = oauth2.create_access_token(data={"user_id": user.id})
     return {"access_token": access_token, "token_type": "bearer", "manager": user.manager}

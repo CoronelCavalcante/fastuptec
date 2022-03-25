@@ -17,10 +17,22 @@ router = APIRouter(
     prefix="/OS",
     tags=['OS']
 )
-#MELHOR COLOCAR TODAS AS FUNÇOES DA AIC EM OUTRO ARQUIVO
-#deixei so url como variavel em função pq ela muda sempre
+
+##OrdemServico.py lida com todos os request de ordem de servico.
+
+
+
+#variavel host e token sao usadas em todas as chamdas para a API da IXC. sendo assim essa API serve como middleware
+
 host = 'https://abn.redeip.com.br/'
 token = settings.ixc_token.encode('utf-8')
+
+
+#get_cliente, get_login, get_assunto, get_contrato tem que ser chamado varias vezes, cada um delas é chamado 1 
+# vez para cada ordem de servico normalmente isso seria uma consulta com JOINS num banco de dados mas a API da IXC nao permite isso, 
+# eu tentei contactar a IXC para ao menos poder fazer uma unica colsulta com varios IPs de clientes 
+# mas falaram que é impossivel tem que ser um a um
+#esse é o motivo pelo qual pode demorar de 10 a 30 segundos para receber as informações
 
 def get_cliente(id_cliente): 
    
@@ -67,70 +79,6 @@ def get_login(id_login):
     resjson = response.json()
     registros = resjson.get('registros')
     return registros #login volta como registros ao inves de registros[0] pra verificar se é ou nao None. pois cliente podem justamente ter a ordem de serviço pra colocar 
-
-
-def get_ordem_abertas():
-    url = "https://abn.redeip.com.br/webservice/v1/su_oss_chamado".format(host)
-    
-
-    payload = json.dumps({
-        'qtype': 'su_oss_chamado.status',
-        'query': 'A',
-        'oper': '=',
-        'page': '1',
-        'rp': '100',
-        'sortname': 'su_oss_chamado.id',
-        'sortorder': 'asc'
-    })
-
-    headers = {
-        'ixcsoft': 'listar',
-        'Authorization': 'Basic {}'.format(base64.b64encode(token).decode('utf-8')),
-        'Content-Type': 'application/json'
-    }
-
-
-
-
-
-    response = requests.post(url, data=payload, headers=headers)
-    resjson = response.json()
-    registros = resjson.get('registros')
-    if not registros:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'ordens abertas nao foram encontradas')
-    
-    return registros
-
-#mudei e my ordem aberta pra my ordem 1 pq nao tem como ter certeza se ta ou nao aberta
-def get_one_by_id(id):
-    url = "https://abn.redeip.com.br/webservice/v1/su_oss_chamado".format(host)
-
-    payload = json.dumps({
-        'qtype': 'su_oss_chamado.id',
-        'query': id,
-        'oper': '=',
-        'page': '1',
-        'rp': '100',
-        'sortname': 'su_oss_chamado.id',
-        'sortorder': 'asc'
-    })
-
-    headers = {
-        'ixcsoft': 'listar',
-        'Authorization': 'Basic {}'.format(base64.b64encode(token).decode('utf-8')),
-        'Content-Type': 'application/json'
-    }
-
-
-
-
-
-    response = requests.post(url, data=payload, headers=headers)
-    resjson = response.json()
-    registros = resjson.get('registros')
-    if not registros:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'ordem {id} nao existe')
-    return registros[0]
 
 def get_one_assunto(id):
     url = "https://abn.redeip.com.br/webservice/v1/su_oss_assunto".format(host)
@@ -197,6 +145,77 @@ def get_one_contrato(id):
 
 
 
+
+
+#get ordems abertas faz uma unica consulta que retorna todas as ordens de servico que estejam marcadas como abertas no banco
+def get_ordem_abertas():
+    url = "https://abn.redeip.com.br/webservice/v1/su_oss_chamado".format(host)
+    
+
+    payload = json.dumps({
+        'qtype': 'su_oss_chamado.status',
+        'query': 'A',
+        'oper': '=',
+        'page': '1',
+        'rp': '100',
+        'sortname': 'su_oss_chamado.id',
+        'sortorder': 'asc'
+    })
+
+    headers = {
+        'ixcsoft': 'listar',
+        'Authorization': 'Basic {}'.format(base64.b64encode(token).decode('utf-8')),
+        'Content-Type': 'application/json'
+    }
+
+
+
+
+
+    response = requests.post(url, data=payload, headers=headers)
+    resjson = response.json()
+    registros = resjson.get('registros')
+    if not registros:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'ordens abertas nao foram encontradas')
+    
+    return registros
+
+
+#usada para pegar um ordem qualquer por id dela. to usado quando se faz alguma consulta de ordem fechada
+def get_one_by_id(id):
+    url = "https://abn.redeip.com.br/webservice/v1/su_oss_chamado".format(host)
+
+    payload = json.dumps({
+        'qtype': 'su_oss_chamado.id',
+        'query': id,
+        'oper': '=',
+        'page': '1',
+        'rp': '100',
+        'sortname': 'su_oss_chamado.id',
+        'sortorder': 'asc'
+    })
+
+    headers = {
+        'ixcsoft': 'listar',
+        'Authorization': 'Basic {}'.format(base64.b64encode(token).decode('utf-8')),
+        'Content-Type': 'application/json'
+    }
+
+
+
+
+
+    response = requests.post(url, data=payload, headers=headers)
+    resjson = response.json()
+    registros = resjson.get('registros')
+    if not registros:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'ordem {id} nao existe')
+    return registros[0]
+
+
+
+#Essa rota é usada unicamente por gerentes para que o front end so precise fazer uma unica chamada para essa api
+#ela carrega todas as infos de ordens de servicos abertas, distribuidas e do proprio gerente
 @router.get("/Manager")
 def all_manager(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
@@ -237,7 +256,8 @@ def all_manager(db: Session = Depends(get_db), current_user: int = Depends(oauth
     managercompleto = {'ordens_abertas': main.ordemMemoria, 'minhas_ordens': minhasOrdens,'ordens_dist':ordemDistCompleta}
     return (managercompleto)
 
-
+#para melhorar um pouco o desempenho eu coloquei para o servidor manter em memoria as ordens de servicos abertas
+#essa rota pede a lista de ordens abertas completas(com cliente contrato login)
 @router.get("/Abertas")
 def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
@@ -247,6 +267,7 @@ def get_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get
     return (main.ordemMemoria)
 
 
+#rota para distribuir uma Os para um funcionario criando uma nova entrada no banco de dados
 @router.post("/Dist", status_code=status.HTTP_201_CREATED)
 def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
@@ -255,11 +276,7 @@ def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_use
     if not employee:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Funcionario com id {dist.id_employee} não existe")
     ordems_abertas = main.ordemMemoria
-    print(ordems_abertas[0].get("ordem_servico").get('id'))
-    # print("dist: ", dist)
-    # print(ordems_abertas[0])
     for ordem in ordems_abertas:
-        # print("ORDEM: ", ordem.mensagem_resposta.get('id'))
         if str(ordem.get("ordem_servico").get('id')) == str(dist.id_ordem_servico):
             nova_ordem = models.OrdemDistribuida(id_employee = employee.id,  id_ordem_servico = int(ordem.get("ordem_servico").get('id')), id_poster = current_user.id, completed = dist.completed) 
             db.add(nova_ordem)
@@ -271,8 +288,8 @@ def dist_os(dist: schemas.DistCreate, db: Session = Depends(get_db), current_use
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"A Ordem de Servico: {ordem.get('ordem_servico').get('id')} Ja foi dada ao Funcionario: {employee.email}")   
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ordem de Servico nao encontrada na lista de Abertas")
             
+#rota para perdi a lista de ordens distribuidas ela nao fica em memoria do servidor pois pode ficar muito longa com o passar do tempo
 
-#isso aqui vai ficar cada vez pior pra cada distribuição de ordem ja que to pegando as passadas tambem.
 @router.get("/Dist")
 def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
@@ -301,9 +318,8 @@ def get_os_distribuida(db: Session = Depends(get_db), current_user: int = Depend
     return (ordemDistCompleta)
 
 
-
+#rota usada para funcionarios receberem as suas ordens de servicos especificas
 @router.get("/My")
-#tem algum errinho que ta acontencendo por aqui eu acho com o current user caso ele nao teja relogado
 def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     
     minhasOrdens = []
@@ -325,8 +341,11 @@ def get_my_os(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
 
     return (minhasOrdens)
 
+
+
+#rota usada para gerentes receberem todas as ordens de servicos que ja foram distribuidaspara um funcionario especifico
 @router.get("/emp/{id}")
-#tem algum errinho que ta acontencendo por aqui eu acho com o current user caso ele nao teja relogado
+
 def get_emp_os(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Voce nao e autorizado a ver todas as Ordens de Servicos abertas')
@@ -352,16 +371,12 @@ def get_emp_os(id: int, db: Session = Depends(get_db), current_user: int = Depen
     return (Ordens)
 
 
-# @router.get("/rapida")
-# def get_open_fast():
-#     print("PING")
-#     return(main.ordemMemoria)
 
 
 
 
+#rota usada para receber uma ordem especifca por ID.
 @router.get("/{id}")
-#tem algum errinho que ta acontencendo por aqui eu acho com o current user caso ele nao teja relogado
 def get_one(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     if current_user.manager == False:        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Nao autorizado')
